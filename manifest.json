@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "CGPA Calculator",
+  "version": "1.0",
+  "description": "Calculates CGPA from result page",
+  "permissions": ["activeTab"],
+  "action": {
+    "default_title": "Calculate CGPA"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://course.cuet.ac.bd/*"],
+      "js": ["content.js"]
+    }
+  ]
+} 
