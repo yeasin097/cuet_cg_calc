@@ -32,15 +32,21 @@ A Chrome extension that calculates your CGPA from the CUET course management sys
 2. **Enable Developer Mode**
    - Look for the "Developer mode" toggle in the top-right corner
    - Turn it ON
+   
+   ![](./assets/select2.png)
 
 3. **Load the Extension**
    - Click "Load unpacked" button in the top-left
    - Navigate to the folder containing the extension files
    - Select the folder and click "Open"
+   
+   ![](./assets/load.png)
 
 4. **Verify Installation**
    - You should see "CUET CGPA Calculator" in your extensions list
    - The extension icon should appear in your Chrome toolbar
+
+   ![](./assets/verify.png)
 
 ## Usage
 
@@ -49,15 +55,22 @@ A Chrome extension that calculates your CGPA from the CUET course management sys
    - Navigate to your results page
 
 2. **Calculate CGPA**
+    
+    ![](./assets/button.png)
+
    - Click the "Calculate CGPA" button in the top-right corner
    - Wait for the page to load all results
    - View your detailed CGPA breakdown
+   
+   ![](./assets/final.png)
 
 3. **Using Target Calculator**
    - Enter your next semester's total credits
    - Enter your target CGPA
    - Click "Calculate Required GPA"
    - See what GPA you need to achieve your target
+   
+   ![](./assets/final2.png)
 
 ## Features
 
