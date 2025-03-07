@@ -88,13 +88,5 @@ A Chrome extension that calculates your CGPA from the CUET course management sys
 - Enter target CGPA and next semester credits
 - Shows if target is achievable
 
-## Troubleshooting
-
-If the extension doesn't work:
-1. Make sure you're on the correct results page
-2. Try refreshing the page
-3. Check if Developer mode is enabled
-4. Try reinstalling the extension
-
 ## Note
 This extension only works on the CUET course management system (course.cuet.ac.bd).

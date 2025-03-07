@@ -106,11 +106,14 @@ function calculateCGPA() {
     resultDiv.style.border = '1px solid #dee2e6';
     resultDiv.style.borderRadius = '10px';
     resultDiv.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)';
-    resultDiv.style.maxWidth = '350px';
+    resultDiv.style.maxWidth = '400px';
+    resultDiv.style.minWidth = '350px';
     resultDiv.style.fontFamily = '"Segoe UI", Arial, sans-serif';
     resultDiv.style.fontSize = '14px';
     resultDiv.style.lineHeight = '1.6';
     resultDiv.style.color = '#343a40';
+    resultDiv.style.overflowY = 'auto';
+    resultDiv.style.maxHeight = '90vh';
 
     // Generate HTML for term-wise CGPA
     let termwiseHTML = `
@@ -118,7 +121,7 @@ function calculateCGPA() {
             <h3 style="margin: 0 0 15px 0; color: #007bff; font-size: 18px; font-weight: 600;">
                 Term-wise CGPA
             </h3>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
     `;
 
     Object.keys(termWiseCredit).sort().forEach(termKey => {
@@ -212,6 +215,10 @@ function calculateRequiredGPA(currentCGPA, currentCredits, targetCGPA, nextSemes
 }
 
 function addTargetCalculator(resultDiv, currentCGPA, currentCredits) {
+    // Make the main container wider
+    resultDiv.style.maxWidth = '400px';  // Increased from 350px
+    resultDiv.style.minWidth = '350px';  // Added minimum width
+
     const targetCalcHTML = `
         <div style="margin-top: 20px; border-top: 2px solid #e9ecef; padding-top: 20px;">
             <h3 style="margin: 0 0 15px 0; color: #007bff; font-size: 16px; font-weight: 600;">
@@ -219,19 +226,19 @@ function addTargetCalculator(resultDiv, currentCGPA, currentCredits) {
             </h3>
             <div style="display: flex; flex-direction: column; gap: 10px;">
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <div style="flex: 2;">
+                    <div style="flex: 3;">  <!-- Adjusted flex ratio -->
                         <input type="number" id="nextCredits" placeholder="Next semester credits" 
                                style="width: 100%; padding: 8px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 14px;"
                                step="0.25" min="0">
                     </div>
-                    <div style="flex: 1;">
+                    <div style="flex: 2;">  <!-- Adjusted flex ratio -->
                         <input type="number" id="targetCGPA" placeholder="Target" 
                                style="width: 100%; padding: 8px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 14px;"
                                step="0.01" min="0" max="4">
                     </div>
                 </div>
                 <button id="calculateTarget" 
-                        style="padding: 8px; background-color: #007bff; color: white; border: none; 
+                        style="padding: 10px; background-color: #007bff; color: white; border: none; 
                                border-radius: 4px; cursor: pointer; font-weight: 500;">
                     Calculate Required GPA
                 </button>
