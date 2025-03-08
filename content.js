@@ -27,6 +27,9 @@ function calculateCGPA() {
     let totalSubjects = new Set(); // Use Set to count unique subjects
     let totalCleared = 0;
     
+    // Track failed subjects
+    const failedSubjectsMap = new Map(); // Use Map to track unique failed subjects
+
     // First pass: collect latest grades and count subjects
     rows.forEach(row => {
         const cells = row.getElementsByTagName('td');
@@ -72,9 +75,9 @@ function calculateCGPA() {
                         termWiseCredit[termKey] = 0;
                     }
 
-                    // Track failed subjects
-                    if (currentGrade === 'F') {
-                        failedSubjects.push({
+                    // Track failed subjects (only store the latest attempt)
+                    if (currentGrade === 'F' && !failedSubjectsMap.has(subjectCode)) {
+                        failedSubjectsMap.set(subjectCode, {
                             code: subjectCode,
                             credits: credits,
                             levelTerm: levelTerm
@@ -90,6 +93,9 @@ function calculateCGPA() {
             }
         }
     });
+
+    // Convert Map to array for failed subjects
+    failedSubjects = Array.from(failedSubjectsMap.values());
 
     // Calculate overall CGPA
     const overallCGPA = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : 0;
