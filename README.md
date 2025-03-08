@@ -68,10 +68,14 @@ A Chrome extension that calculates your CGPA from the CUET course management sys
 
 3. **Load the Extension**
    - Click "Load unpacked" button in the top-left
+
+      ![](./assets/load.png)
+
    - Navigate to the folder containing the extension files
    - Select the folder and click "Open"
+
+   ![](./assets/folder.png)
    
-   ![](./assets/load.png)
 
 4. **Verify Installation**
    - You should see "CUET CGPA Calculator" in your extensions list
