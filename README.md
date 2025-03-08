@@ -16,13 +16,18 @@ A Chrome extension that calculates your CGPA from the CUET course management sys
 - Visual representation of grade distribution
 - Total count of theory and lab courses
 
-### 3. Target CGPA Calculator
+### 3. Failed Subjects Tracking
+- Lists all subjects that need to be cleared
+- Shows subject code, credits, and term information
+- Tracks improvement in retaken courses
+- Displays unique failed subjects without duplicates
+
+### 4. Target CGPA Calculator
 - Calculate required GPA for next semester
 - Enter target CGPA and next semester credits
 - Shows if target is achievable
-- Displays required GPA to reach target
 
-### 4. What-If Grade Simulator
+### 5. What-If Grade Simulator
 - Simulate grade changes for any course
 - Real-time CGPA recalculation
 - Shows CGPA impact of grade improvements
