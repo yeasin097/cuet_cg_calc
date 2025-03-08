@@ -484,15 +484,15 @@ function addWhatIfSimulator(resultDiv, rows, subjectGrades, currentCGPA, totalCr
                     </select>
                     <select id="newGrade" style="flex: 2; padding: 8px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 14px;">
                         <option value="">New grade...</option>
-                        <option value="A+">A+</option>
-                        <option value="A">A</option>
-                        <option value="A-">A-</option>
-                        <option value="B+">B+</option>
-                        <option value="B">B</option>
-                        <option value="B-">B-</option>
-                        <option value="C+">C+</option>
-                        <option value="C">C</option>
-                        <option value="D">D</option>
+                        <option value="A+">A+ (4.00)</option>
+                        <option value="A">A (3.75)</option>
+                        <option value="A-">A- (3.50)</option>
+                        <option value="B+">B+ (3.25)</option>
+                        <option value="B">B (3.00)</option>
+                        <option value="B-">B- (2.75)</option>
+                        <option value="C+">C+ (2.50)</option>
+                        <option value="C">C (2.25)</option>
+                        <option value="D">D (2.00)</option>
                     </select>
                 </div>
                 <button id="addSimulation" style="padding: 8px; background-color: #007bff; color: white; border: none; 
@@ -522,6 +522,22 @@ function addWhatIfSimulator(resultDiv, rows, subjectGrades, currentCGPA, totalCr
     const simulationList = simulatorDiv.querySelector('#simulationList');
     const simulationResult = simulatorDiv.querySelector('#simulationResult');
 
+    // Function to disable selected subjects in dropdown
+    function updateSubjectDropdown() {
+        Array.from(subjectSelect.options).forEach(option => {
+            if (option.value && simulatedGrades.has(option.value)) {
+                option.disabled = true;
+                option.style.color = '#999';
+            } else {
+                option.disabled = false;
+                option.style.color = '';
+            }
+        });
+        // Reset selection to default
+        subjectSelect.value = '';
+        newGradeSelect.value = '';
+    }
+
     function calculateSimulatedCGPA() {
         let totalPoints = 0;
         let totalCredits = 0;
@@ -549,7 +565,7 @@ function addWhatIfSimulator(resultDiv, rows, subjectGrades, currentCGPA, totalCr
                                      simulatedGrades.get(subjectCode) : 
                                      currentGrade;
 
-                    if (!isNaN(credits) && finalGrade in gradePoints) {  // Now gradePoints will be accessible
+                    if (!isNaN(credits) && finalGrade in gradePoints) {
                         totalPoints += credits * gradePoints[finalGrade];
                         totalCredits += credits;
                     }
@@ -557,7 +573,6 @@ function addWhatIfSimulator(resultDiv, rows, subjectGrades, currentCGPA, totalCr
             }
         });
 
-        // Calculate and return the new CGPA
         return totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : "0.00";
     }
 
@@ -567,16 +582,30 @@ function addWhatIfSimulator(resultDiv, rows, subjectGrades, currentCGPA, totalCr
         const currentGrade = subjectSelect.selectedOptions[0]?.dataset?.current;
 
         if (subject && newGrade && currentGrade) {
+            // Check if subject is already simulated
+            if (simulatedGrades.has(subject)) {
+                alert('This subject has already been simulated. Remove the existing simulation first.');
+                return;
+            }
+
             simulatedGrades.set(subject, newGrade);
             simulationCount++;
 
             // Add to simulation list
             const simItem = document.createElement('div');
             simItem.style.cssText = 'background-color: white; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center;';
+            
+            const pointDifference = gradePoints[newGrade] - gradePoints[currentGrade];
+            const pointChangeText = pointDifference >= 0 ? `+${pointDifference.toFixed(2)}` : pointDifference.toFixed(2);
+            const pointChangeColor = pointDifference >= 0 ? '#28a745' : '#dc3545';
+
             simItem.innerHTML = `
                 <div>
                     <div style="font-weight: 500;">${subject}</div>
-                    <div style="font-size: 12px; color: #6c757d;">${currentGrade} → ${newGrade}</div>
+                    <div style="font-size: 12px;">
+                        <span style="color: #6c757d;">${currentGrade} (${gradePoints[currentGrade].toFixed(2)}) → ${newGrade} (${gradePoints[newGrade].toFixed(2)})</span>
+                        <span style="color: ${pointChangeColor}; margin-left: 5px;">${pointChangeText}</span>
+                    </div>
                 </div>
                 <button class="remove-sim" data-subject="${subject}" style="padding: 4px 8px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
                     Remove
@@ -584,6 +613,9 @@ function addWhatIfSimulator(resultDiv, rows, subjectGrades, currentCGPA, totalCr
             `;
 
             simulationList.appendChild(simItem);
+
+            // Update subject dropdown
+            updateSubjectDropdown();
 
             // Calculate new CGPA
             const simulatedCGPA = calculateSimulatedCGPA();
@@ -597,10 +629,6 @@ function addWhatIfSimulator(resultDiv, rows, subjectGrades, currentCGPA, totalCr
                     Change: ${changeText}
                 </div>
             `;
-
-            // Reset selects
-            subjectSelect.value = '';
-            newGradeSelect.value = '';
         }
     });
 
@@ -611,6 +639,9 @@ function addWhatIfSimulator(resultDiv, rows, subjectGrades, currentCGPA, totalCr
             simulatedGrades.delete(subject);
             e.target.closest('div').remove();
             simulationCount--;
+
+            // Update subject dropdown after removal
+            updateSubjectDropdown();
 
             if (simulationCount === 0) {
                 simulationResult.style.display = 'none';
