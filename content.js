@@ -64,7 +64,8 @@ function calculateCGPA() {
             // Only process if this is the latest grade for the subject
             if (currentGrade === subjectGrades[subjectCode]) {
                 const matches = levelTerm.match(/Level (\d+) - Term (\d+)/);
-                if (matches && !isNaN(credits) && currentGrade in gradePoints) {
+                // Skip failed subjects completely - don't count credits or grade points
+                if (matches && !isNaN(credits) && currentGrade in gradePoints && currentGrade !== 'F') {
                     const level = matches[1];
                     const term = matches[2];
                     const termKey = `${level}${term}`;
@@ -75,16 +76,7 @@ function calculateCGPA() {
                         termWiseCredit[termKey] = 0;
                     }
 
-                    // Track failed subjects (only store the latest attempt)
-                    if (currentGrade === 'F' && !failedSubjectsMap.has(subjectCode)) {
-                        failedSubjectsMap.set(subjectCode, {
-                            code: subjectCode,
-                            credits: credits,
-                            levelTerm: levelTerm
-                        });
-                    }
-
-                    // Update calculations
+                    // Update calculations - only for passed subjects
                     termWiseCreditAndGrade[termKey] += credits * gradePoints[currentGrade];
                     termWiseCredit[termKey] += credits;
                     totalPoints += credits * gradePoints[currentGrade];
@@ -571,7 +563,8 @@ function addWhatIfSimulator(resultDiv, rows, subjectGrades, currentCGPA, totalCr
                                      simulatedGrades.get(subjectCode) : 
                                      currentGrade;
 
-                    if (!isNaN(credits) && finalGrade in gradePoints) {
+                    // Only include in calculation if it's not a failed grade
+                    if (!isNaN(credits) && finalGrade in gradePoints && finalGrade !== 'F') {
                         totalPoints += credits * gradePoints[finalGrade];
                         totalCredits += credits;
                     }
