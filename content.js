@@ -35,24 +35,39 @@ function calculateCGPA() {
         const cells = row.getElementsByTagName('td');
         if (cells.length >= 5) {
             const subjectCode = cells[0].textContent.trim();
+            const credits = parseFloat(cells[1].textContent);
+            const levelTerm = cells[2].textContent.trim();
             const grade = cells[4].textContent.trim();
             
             totalSubjects.add(subjectCode);
             
+            // Update latest grade for the subject
             if (!subjectGrades[subjectCode] || grade !== 'F') {
                 subjectGrades[subjectCode] = grade;
             }
         }
     });
 
-    // Count cleared subjects
+    // Count cleared subjects and track currently failed subjects
     Object.entries(subjectGrades).forEach(([subject, grade]) => {
         if (grade !== 'F') {
             totalCleared++;
+        } else {
+            // Only add to failedSubjectsMap if the latest grade is F
+            rows.forEach(row => {
+                const cells = row.getElementsByTagName('td');
+                if (cells.length >= 5 && cells[0].textContent.trim() === subject && cells[4].textContent.trim() === 'F') {
+                    failedSubjectsMap.set(subject, {
+                        code: subject,
+                        credits: parseFloat(cells[1].textContent),
+                        levelTerm: cells[2].textContent.trim()
+                    });
+                }
+            });
         }
     });
 
-    // Second pass: calculate CGPA using latest grades
+    // Second pass: calculate CGPA using latest grades (excluding F grades)
     rows.forEach(row => {
         const cells = row.getElementsByTagName('td');
         if (cells.length >= 5) {
@@ -61,11 +76,10 @@ function calculateCGPA() {
             const levelTerm = cells[2].textContent.trim();
             const currentGrade = cells[4].textContent.trim();
             
-            // Only process if this is the latest grade for the subject
-            if (currentGrade === subjectGrades[subjectCode]) {
+            // Only process if this is the latest grade for the subject and it's not an F grade
+            if (currentGrade === subjectGrades[subjectCode] && currentGrade !== 'F') {
                 const matches = levelTerm.match(/Level (\d+) - Term (\d+)/);
-                // Skip failed subjects completely - don't count credits or grade points
-                if (matches && !isNaN(credits) && currentGrade in gradePoints && currentGrade !== 'F') {
+                if (matches && !isNaN(credits) && currentGrade in gradePoints) {
                     const level = matches[1];
                     const term = matches[2];
                     const termKey = `${level}${term}`;
