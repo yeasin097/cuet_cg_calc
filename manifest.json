@@ -9,7 +9,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://course.cuet.ac.bd/*"],
+      "matches": ["*://course.cuet.ac.bd/result_published.php"],
       "js": ["content.js"]
     }
   ]

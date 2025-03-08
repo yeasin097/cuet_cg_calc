@@ -1,21 +1,20 @@
+const gradePoints = {
+    'A+': 4.00,
+    'A': 3.75,
+    'A-': 3.50,
+    'B+': 3.25,
+    'B': 3.00,
+    'B-': 2.75,
+    'C+': 2.50,
+    'C': 2.25,
+    'D': 2.00,
+    'F': 0.00
+};
+
 function calculateCGPA() {
     // Get all rows with class 'productall_row'
     const rows = document.querySelectorAll('.productall_row');
     
-    // Grade point mapping
-    const gradePoints = {
-        'A+': 4.00,
-        'A': 3.75,
-        'A-': 3.50,
-        'B+': 3.25,
-        'B': 3.00,
-        'B-': 2.75,
-        'C+': 2.50,
-        'C': 2.25,
-        'D': 2.00,
-        'F': 0.00
-    };
-
     // Track subjects and their latest grades
     const subjectGrades = {};
     const termWiseCreditAndGrade = {};
@@ -205,7 +204,13 @@ function calculateCGPA() {
 
     document.body.appendChild(resultDiv);
 
+    const extendedStats = calculateExtendedStats(rows, subjectGrades);
+    
+    // Add this before adding the target calculator
+    addExtendedStats(resultDiv, extendedStats);
+
     addTargetCalculator(resultDiv, parseFloat(overallCGPA), totalCredits);
+    addWhatIfSimulator(resultDiv, rows, subjectGrades, parseFloat(overallCGPA), totalCredits);
 }
 
 function calculateRequiredGPA(currentCGPA, currentCredits, targetCGPA, nextSemesterCredits) {
@@ -364,4 +369,263 @@ function createCalculateButton() {
 }
 
 // Run when page loads
-createCalculateButton(); 
+createCalculateButton();
+
+function calculateExtendedStats(rows, subjectGrades) {
+    // Separate grade distributions for theory and lab
+    const theoryGrades = {
+        'A+': 0, 'A': 0, 'A-': 0,
+        'B+': 0, 'B': 0, 'B-': 0,
+        'C+': 0, 'C': 0, 'D': 0, 'F': 0
+    };
+    
+    const labGrades = {
+        'A+': 0, 'A': 0, 'A-': 0,
+        'B+': 0, 'B': 0, 'B-': 0,
+        'C+': 0, 'C': 0, 'D': 0, 'F': 0
+    };
+
+    // Process each subject's final grade
+    rows.forEach(row => {
+        const cells = row.getElementsByTagName('td');
+        if (cells.length >= 5) {
+            const subjectCode = cells[0].textContent.trim();
+            const isLab = cells[3].textContent.trim() === 'Yes';
+            const currentGrade = cells[4].textContent.trim();
+            
+            // Only count if it's the latest grade for the subject
+            if (currentGrade === subjectGrades[subjectCode]) {
+                if (isLab) {
+                    labGrades[currentGrade]++;
+                } else {
+                    theoryGrades[currentGrade]++;
+                }
+            }
+        }
+    });
+
+    return { theoryGrades, labGrades };
+}
+
+function addExtendedStats(resultDiv, stats) {
+    const statsHTML = `
+        <div style="margin-top: 20px; border-top: 2px solid #e9ecef; padding-top: 20px;">
+            <!-- Theory Courses -->
+            <h3 style="margin: 0 0 15px 0; color: #007bff; font-size: 16px; font-weight: 600;">
+                Theory Course Grades
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px;">
+                ${Object.entries(stats.theoryGrades)
+                    .filter(([_, count]) => count > 0)
+                    .map(([grade, count]) => `
+                        <div style="background-color: white; padding: 8px; border-radius: 6px; border: 1px solid #e9ecef; text-align: center;">
+                            <div style="color: #6c757d; font-size: 12px;">${grade}</div>
+                            <div style="font-size: 16px; font-weight: 600; color: #212529;">${count}</div>
+                        </div>
+                    `).join('')}
+            </div>
+
+            <!-- Lab Courses -->
+            <h3 style="margin: 20px 0 15px 0; color: #007bff; font-size: 16px; font-weight: 600;">
+                Lab Course Grades
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
+                ${Object.entries(stats.labGrades)
+                    .filter(([_, count]) => count > 0)
+                    .map(([grade, count]) => `
+                        <div style="background-color: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px solid #e9ecef; text-align: center;">
+                            <div style="color: #6c757d; font-size: 12px;">${grade}</div>
+                            <div style="font-size: 16px; font-weight: 600; color: #212529;">${count}</div>
+                        </div>
+                    `).join('')}
+            </div>
+
+            <!-- Summary -->
+            <div style="margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 6px;">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <div>
+                        <div style="color: #495057; font-size: 13px;">Total Theory Courses</div>
+                        <div style="font-size: 16px; font-weight: 600; color: #212529;">
+                            ${Object.values(stats.theoryGrades).reduce((a, b) => a + b, 0)}
+                        </div>
+                    </div>
+                    <div>
+                        <div style="color: #495057; font-size: 13px;">Total Lab Courses</div>
+                        <div style="font-size: 16px; font-weight: 600; color: #212529;">
+                            ${Object.values(stats.labGrades).reduce((a, b) => a + b, 0)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const statsDiv = document.createElement('div');
+    statsDiv.innerHTML = statsHTML;
+    resultDiv.appendChild(statsDiv);
+}
+
+function addWhatIfSimulator(resultDiv, rows, subjectGrades, currentCGPA, totalCredits) {
+    const simulatorHTML = `
+        <div style="margin-top: 20px; border-top: 2px solid #e9ecef; padding-top: 20px;">
+            <h3 style="margin: 0 0 15px 0; color: #007bff; font-size: 16px; font-weight: 600;">
+                What-If Grade Simulator
+            </h3>
+            <div id="gradeSimulator" style="display: flex; flex-direction: column; gap: 15px;">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="subjectSelect" style="flex: 3; padding: 8px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 14px;">
+                        <option value="">Select a subject...</option>
+                        ${Object.entries(subjectGrades)
+                            .map(([code, grade]) => `
+                                <option value="${code}" data-current="${grade}">
+                                    ${code} (Current: ${grade})
+                                </option>
+                            `).join('')}
+                    </select>
+                    <select id="newGrade" style="flex: 2; padding: 8px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 14px;">
+                        <option value="">New grade...</option>
+                        <option value="A+">A+</option>
+                        <option value="A">A</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B">B</option>
+                        <option value="B-">B-</option>
+                        <option value="C+">C+</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                    </select>
+                </div>
+                <button id="addSimulation" style="padding: 8px; background-color: #007bff; color: white; border: none; 
+                                                border-radius: 4px; cursor: pointer; font-weight: 500;">
+                    Add to Simulation
+                </button>
+                <div id="simulationList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                <div id="simulationResult" style="margin-top: 10px; padding: 15px; border-radius: 6px; 
+                                                background-color: #f8f9fa; text-align: center; display: none;">
+                </div>
+            </div>
+        </div>
+    `;
+
+    const simulatorDiv = document.createElement('div');
+    simulatorDiv.innerHTML = simulatorHTML;
+    resultDiv.appendChild(simulatorDiv);
+
+    // Track simulated changes
+    const simulatedGrades = new Map();
+    let simulationCount = 0;
+
+    // Add event listeners
+    const subjectSelect = simulatorDiv.querySelector('#subjectSelect');
+    const newGradeSelect = simulatorDiv.querySelector('#newGrade');
+    const addButton = simulatorDiv.querySelector('#addSimulation');
+    const simulationList = simulatorDiv.querySelector('#simulationList');
+    const simulationResult = simulatorDiv.querySelector('#simulationResult');
+
+    function calculateSimulatedCGPA() {
+        let totalPoints = 0;
+        let totalCredits = 0;
+        const processedSubjects = new Set();
+
+        // Process each row
+        rows.forEach(row => {
+            const cells = row.getElementsByTagName('td');
+            if (cells.length >= 5) {
+                const subjectCode = cells[0].textContent.trim();
+                const credits = parseFloat(cells[1].textContent);
+                const currentGrade = cells[4].textContent.trim();
+                
+                // Skip if we've already processed this subject
+                if (processedSubjects.has(subjectCode)) {
+                    return;
+                }
+
+                // Only process if it's the latest grade for the subject
+                if (currentGrade === subjectGrades[subjectCode]) {
+                    processedSubjects.add(subjectCode);
+                    
+                    // Use simulated grade if available, otherwise use current grade
+                    const finalGrade = simulatedGrades.has(subjectCode) ? 
+                                     simulatedGrades.get(subjectCode) : 
+                                     currentGrade;
+
+                    if (!isNaN(credits) && finalGrade in gradePoints) {  // Now gradePoints will be accessible
+                        totalPoints += credits * gradePoints[finalGrade];
+                        totalCredits += credits;
+                    }
+                }
+            }
+        });
+
+        // Calculate and return the new CGPA
+        return totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : "0.00";
+    }
+
+    addButton.addEventListener('click', () => {
+        const subject = subjectSelect.value;
+        const newGrade = newGradeSelect.value;
+        const currentGrade = subjectSelect.selectedOptions[0]?.dataset?.current;
+
+        if (subject && newGrade && currentGrade) {
+            simulatedGrades.set(subject, newGrade);
+            simulationCount++;
+
+            // Add to simulation list
+            const simItem = document.createElement('div');
+            simItem.style.cssText = 'background-color: white; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center;';
+            simItem.innerHTML = `
+                <div>
+                    <div style="font-weight: 500;">${subject}</div>
+                    <div style="font-size: 12px; color: #6c757d;">${currentGrade} → ${newGrade}</div>
+                </div>
+                <button class="remove-sim" data-subject="${subject}" style="padding: 4px 8px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Remove
+                </button>
+            `;
+
+            simulationList.appendChild(simItem);
+
+            // Calculate new CGPA
+            const simulatedCGPA = calculateSimulatedCGPA();
+            const difference = (simulatedCGPA - currentCGPA).toFixed(2);
+            const changeText = difference >= 0 ? `+${difference}` : difference;
+
+            simulationResult.style.display = 'block';
+            simulationResult.innerHTML = `
+                <div style="font-weight: 600; margin-bottom: 5px;">Simulated CGPA: ${simulatedCGPA}</div>
+                <div style="font-size: 13px; color: ${difference >= 0 ? '#28a745' : '#dc3545'};">
+                    Change: ${changeText}
+                </div>
+            `;
+
+            // Reset selects
+            subjectSelect.value = '';
+            newGradeSelect.value = '';
+        }
+    });
+
+    // Handle remove buttons
+    simulationList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-sim')) {
+            const subject = e.target.dataset.subject;
+            simulatedGrades.delete(subject);
+            e.target.closest('div').remove();
+            simulationCount--;
+
+            if (simulationCount === 0) {
+                simulationResult.style.display = 'none';
+            } else {
+                const simulatedCGPA = calculateSimulatedCGPA();
+                const difference = (simulatedCGPA - currentCGPA).toFixed(2);
+                const changeText = difference >= 0 ? `+${difference}` : difference;
+
+                simulationResult.innerHTML = `
+                    <div style="font-weight: 600; margin-bottom: 5px;">Simulated CGPA: ${simulatedCGPA}</div>
+                    <div style="font-size: 13px; color: ${difference >= 0 ? '#28a745' : '#dc3545'};">
+                        Change: ${changeText}
+                    </div>
+                `;
+            }
+        }
+    });
+} 
