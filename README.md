@@ -134,6 +134,6 @@ A Chrome extension that calculates your CGPA from the CUET course management sys
 3. See the required GPA to achieve your target
 
 ## Note
-This extension only works on the CUET course management system (course.cuet.ac.bd). This is an enhanced version of my Python program from 2023 for calculating results. While the logic and algorithm remain the same, it has been improved and adapted into an extension.
+This extension only works on the CUET course management system (course.cuet.ac.bd). This is an enhanced version of my Python program from 2023 for calculating results. While the logic and algorithm remain the same, it has been improved and adapted into an extension. You can find the Python code and demo result.txt file in the old_python branch of this repository.
 
 
