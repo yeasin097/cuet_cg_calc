@@ -4,7 +4,6 @@
   "version": "1.0",
   "description": "Calculates CGPA from result page",
   "permissions": ["activeTab"],
-   "license": "Apache-2.0",
   "action": {
     "default_title": "Calculate CGPA"
   },
