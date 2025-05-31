@@ -104,7 +104,7 @@ function calculateCGPA() {
     failedSubjects = Array.from(failedSubjectsMap.values());
 
     // Calculate overall CGPA
-    const overallCGPA = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : 0;
+    const overallCGPA = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(3) : 0;
 
     // Create result display with enhanced styling
     const resultDiv = document.createElement('div');
