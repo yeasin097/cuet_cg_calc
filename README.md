@@ -34,6 +34,14 @@ A Chrome extension that calculates your CGPA from the CUET course management sys
 - Multiple course simulation support
 - Easy to add/remove simulated grades
 
+### 6. CGPA Progress Chart
+- Visual graph showing cumulative CGPA progress across semesters
+- X-axis: Semester 1 to 8
+- Y-axis: CGPA scale (0-4.0)
+- Shows semester-wise CGPA data in a grid format
+- Interactive chart with grid lines and data points
+- Cumulative calculation: avgCGPAinTerm5 = (sum of product of credit and GPA of 5 semester)/total credit of 5 semester
+
 ## Installation Steps
 
 ### Method 1: Direct from GitHub
@@ -113,6 +121,12 @@ A Chrome extension that calculates your CGPA from the CUET course management sys
    - Click "Add to Simulation"
    
    ![](./assets/simulate.png)
+
+5. **Viewing CGPA Progress Chart**
+   - The chart automatically appears when you calculate CGPA
+   - View your cumulative CGPA progress across all semesters
+   - See semester-wise CGPA values in the grid below the chart
+   - Track your academic progress visually
 
 ## Usage Guide
 

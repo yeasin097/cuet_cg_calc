@@ -117,8 +117,8 @@ function calculateCGPA() {
     resultDiv.style.border = '1px solid #dee2e6';
     resultDiv.style.borderRadius = '10px';
     resultDiv.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)';
-    resultDiv.style.maxWidth = '400px';
-    resultDiv.style.minWidth = '350px';
+    resultDiv.style.maxWidth = '500px';
+    resultDiv.style.minWidth = '450px';
     resultDiv.style.fontFamily = '"Segoe UI", Arial, sans-serif';
     resultDiv.style.fontSize = '14px';
     resultDiv.style.lineHeight = '1.6';
@@ -221,6 +221,10 @@ function calculateCGPA() {
     // Add this before adding the target calculator
     addExtendedStats(resultDiv, extendedStats);
 
+    // Calculate and add CGPA chart
+    const semesterData = calculateSemesterWiseCGPA(rows, subjectGrades);
+    addCGPAChart(resultDiv, semesterData);
+
     addTargetCalculator(resultDiv, parseFloat(overallCGPA), totalCredits);
     addWhatIfSimulator(resultDiv, rows, subjectGrades, parseFloat(overallCGPA), totalCredits);
 }
@@ -233,8 +237,8 @@ function calculateRequiredGPA(currentCGPA, currentCredits, targetCGPA, nextSemes
 
 function addTargetCalculator(resultDiv, currentCGPA, currentCredits) {
     // Make the main container wider
-    resultDiv.style.maxWidth = '400px';  // Increased from 350px
-    resultDiv.style.minWidth = '350px';  // Added minimum width
+    resultDiv.style.maxWidth = '500px';  // Increased from 400px
+    resultDiv.style.minWidth = '450px';  // Increased from 350px
 
     const targetCalcHTML = `
         <div style="margin-top: 20px; border-top: 2px solid #e9ecef; padding-top: 20px;">
@@ -672,4 +676,261 @@ function addWhatIfSimulator(resultDiv, rows, subjectGrades, currentCGPA, totalCr
             }
         }
     });
+}
+
+function calculateSemesterWiseCGPA(rows, subjectGrades) {
+    const semesterData = {};
+    
+    // Initialize semester data
+    for (let i = 1; i <= 8; i++) {
+        semesterData[i] = {
+            totalPoints: 0,
+            totalCredits: 0,
+            cgpa: 0
+        };
+    }
+    
+    // Process each row to calculate semester-wise data
+    rows.forEach(row => {
+        const cells = row.getElementsByTagName('td');
+        if (cells.length >= 5) {
+            const subjectCode = cells[0].textContent.trim();
+            const credits = parseFloat(cells[1].textContent);
+            const levelTerm = cells[2].textContent.trim();
+            const currentGrade = cells[4].textContent.trim();
+            
+            // Only process if this is the latest grade for the subject and it's not an F grade
+            if (currentGrade === subjectGrades[subjectCode] && currentGrade !== 'F') {
+                const matches = levelTerm.match(/Level (\d+) - Term (\d+)/);
+                if (matches && !isNaN(credits) && currentGrade in gradePoints) {
+                    const level = parseInt(matches[1]);
+                    const term = parseInt(matches[2]);
+                    const semester = (level - 1) * 2 + term; // Convert to semester number (1-8)
+                    
+                    if (semester >= 1 && semester <= 8) {
+                        semesterData[semester].totalPoints += credits * gradePoints[currentGrade];
+                        semesterData[semester].totalCredits += credits;
+                    }
+                }
+            }
+        }
+    });
+    
+    // Calculate cumulative CGPA for each semester
+    let cumulativePoints = 0;
+    let cumulativeCredits = 0;
+    
+    for (let i = 1; i <= 8; i++) {
+        if (semesterData[i].totalCredits > 0) {
+            cumulativePoints += semesterData[i].totalPoints;
+            cumulativeCredits += semesterData[i].totalCredits;
+            semesterData[i].cgpa = cumulativeCredits > 0 ? (cumulativePoints / cumulativeCredits) : 0;
+        } else {
+            // If no credits in this semester, use previous semester's CGPA
+            semesterData[i].cgpa = i > 1 ? semesterData[i-1].cgpa : 0;
+        }
+    }
+    
+    return semesterData;
+}
+
+function createCGPAChart(semesterData) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 250;
+    canvas.style.border = '1px solid #dee2e6';
+    canvas.style.borderRadius = '8px';
+    canvas.style.backgroundColor = 'white';
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Chart dimensions
+    const margin = { top: 30, right: 30, bottom: 40, left: 50 };
+    const width = canvas.width - margin.left - margin.right;
+    const height = canvas.height - margin.top - margin.bottom;
+    
+    // Data preparation
+    const data = [];
+    for (let i = 1; i <= 8; i++) {
+        data.push({
+            semester: i,
+            cgpa: semesterData[i].cgpa
+        });
+    }
+    
+    // Find min and max values for scaling
+    const cgpaValues = data.map(d => d.cgpa).filter(cgpa => cgpa > 0);
+    
+    // Handle case where no valid CGPA data exists
+    if (cgpaValues.length === 0) {
+        // Draw "No Data" message
+        ctx.fillStyle = '#6c757d';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('No CGPA data available', canvas.width / 2, canvas.height / 2);
+        return canvas;
+    }
+    
+    const minCGPA = Math.min(...cgpaValues);
+    const maxCGPA = Math.max(...cgpaValues);
+    
+    // Scale to ensure we show a reasonable range
+    const yMin = Math.max(0, minCGPA - 0.2);
+    const yMax = Math.min(4, maxCGPA + 0.2);
+    
+    // Scaling functions
+    const xScale = (semester) => margin.left + (semester - 1) * (width / 7);
+    const yScale = (cgpa) => margin.top + height - ((cgpa - yMin) / (yMax - yMin)) * height;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw grid lines
+    ctx.strokeStyle = '#e9ecef';
+    ctx.lineWidth = 1;
+    
+    // Horizontal grid lines
+    for (let i = 0; i <= 4; i++) {
+        const y = margin.top + (i * height / 4);
+        ctx.beginPath();
+        ctx.moveTo(margin.left, y);
+        ctx.lineTo(margin.left + width, y);
+        ctx.stroke();
+    }
+    
+    // Vertical grid lines
+    for (let i = 0; i <= 7; i++) {
+        const x = margin.left + (i * width / 7);
+        ctx.beginPath();
+        ctx.moveTo(x, margin.top);
+        ctx.lineTo(x, margin.top + height);
+        ctx.stroke();
+    }
+    
+    // Draw axes
+    ctx.strokeStyle = '#495057';
+    ctx.lineWidth = 2;
+    
+    // X-axis
+    ctx.beginPath();
+    ctx.moveTo(margin.left, margin.top + height);
+    ctx.lineTo(margin.left + width, margin.top + height);
+    ctx.stroke();
+    
+    // Y-axis
+    ctx.beginPath();
+    ctx.moveTo(margin.left, margin.top);
+    ctx.lineTo(margin.left, margin.top + height);
+    ctx.stroke();
+    
+    // Draw data points and lines
+    ctx.strokeStyle = '#007bff';
+    ctx.lineWidth = 3;
+    ctx.fillStyle = '#007bff';
+    
+    let firstPoint = true;
+    data.forEach((d, index) => {
+        if (d.cgpa > 0) {
+            const x = xScale(d.semester);
+            const y = yScale(d.cgpa);
+            
+            // Draw line to previous point
+            if (!firstPoint) {
+                const prevData = data[index - 1];
+                if (prevData.cgpa > 0) {
+                    const prevX = xScale(prevData.semester);
+                    const prevY = yScale(prevData.cgpa);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(prevX, prevY);
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                }
+            }
+            
+            // Draw point
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            firstPoint = false;
+        }
+    });
+    
+    // Draw labels
+    ctx.fillStyle = '#495057';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    
+    // X-axis labels
+    for (let i = 1; i <= 8; i++) {
+        const x = xScale(i);
+        const y = margin.top + height + 20;
+        ctx.fillText(`Sem ${i}`, x, y);
+    }
+    
+    // Y-axis labels
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+        const cgpa = yMin + (4 - i) * (yMax - yMin) / 4;
+        const x = margin.left - 10;
+        const y = margin.top + (i * height / 4) + 4;
+        ctx.fillText(cgpa.toFixed(1), x, y);
+    }
+    
+    // Chart title
+    ctx.fillStyle = '#212529';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Cumulative CGPA Progress', canvas.width / 2, 20);
+    
+    return canvas;
+}
+
+function addCGPAChart(resultDiv, semesterData) {
+    const chartHTML = `
+        <div style="margin-top: 20px; border-top: 2px solid #e9ecef; padding-top: 20px;">
+            <h3 style="margin: 0 0 15px 0; color: #007bff; font-size: 16px; font-weight: 600;">
+                CGPA Progress Chart
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div id="chartContainer" style="display: flex; justify-content: center; padding: 10px;">
+                    <!-- Chart will be inserted here -->
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                    ${Object.entries(semesterData)
+                        .slice(0, 4)
+                        .map(([semester, data]) => `
+                            <div style="background-color: white; padding: 8px; border-radius: 6px; border: 1px solid #e9ecef; text-align: center;">
+                                <div style="color: #6c757d; font-size: 11px;">Sem ${semester}</div>
+                                <div style="font-size: 14px; font-weight: 600; color: #212529;">
+                                    ${data.cgpa > 0 ? data.cgpa.toFixed(2) : 'N/A'}
+                                </div>
+                            </div>
+                        `).join('')}
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                    ${Object.entries(semesterData)
+                        .slice(4, 8)
+                        .map(([semester, data]) => `
+                            <div style="background-color: white; padding: 8px; border-radius: 6px; border: 1px solid #e9ecef; text-align: center;">
+                                <div style="color: #6c757d; font-size: 11px;">Sem ${semester}</div>
+                                <div style="font-size: 14px; font-weight: 600; color: #212529;">
+                                    ${data.cgpa > 0 ? data.cgpa.toFixed(2) : 'N/A'}
+                                </div>
+                            </div>
+                        `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const chartDiv = document.createElement('div');
+    chartDiv.innerHTML = chartHTML;
+    resultDiv.appendChild(chartDiv);
+    
+    // Create and insert the chart
+    const chartContainer = chartDiv.querySelector('#chartContainer');
+    const canvas = createCGPAChart(semesterData);
+    chartContainer.appendChild(canvas);
 } 
